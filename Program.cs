@@ -13,6 +13,8 @@ namespace TestProject {
 
             app.UseHttpsRedirection();
 
+            app.UseDefaultFiles();//load index.html
+            
             app.UseStaticFiles();
 
             app.MapControllers();
