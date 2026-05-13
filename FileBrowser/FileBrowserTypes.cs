@@ -13,8 +13,25 @@ namespace TestProject.FileBrowser {
         string Name,
         long SizeBytes
     );
-    public sealed record SearchResult(
+    public sealed record SearchResults(
+        string Query,
+        IReadOnlyList<SearchResultEntry> Entries
+    );
+    public sealed record SearchResultEntry(
         string Name,
-        string Path
+        string Path,
+        bool IsFolder
+    );
+    public sealed record FileOperationResult(
+        bool Success,
+        string Message
+    );
+    public sealed record MoveRequest(
+        string Source,
+        string Dest
+    );
+    public sealed record CopyRequest(
+        string Source,
+        string Dest
     );
 }

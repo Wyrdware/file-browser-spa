@@ -1,25 +1,18 @@
-namespace TestProject {
-    public class Program {
-        public static void Main(string[] args) {
-            var builder = WebApplication.CreateBuilder(args);
+using TestProject.FileBrowser;
 
-            // Add services to the container.
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddControllers();
+builder.Services.AddControllers();
 
-            var app = builder.Build();
+string homeDirectory = builder.Configuration["FileBrowser:HomeDirectory"]
+    ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "FileBrowserHome");
+builder.Services.AddSingleton(new FileSystem(homeDirectory));
 
-            // Configure the HTTP request pipeline.
+WebApplication app = builder.Build();
 
-            app.UseHttpsRedirection();
+app.UseHttpsRedirection();
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.MapControllers();
 
-            app.UseDefaultFiles();//load index.html
-            
-            app.UseStaticFiles();
-
-            app.MapControllers();
-
-            app.Run();
-        }
-    }
-}
+app.Run();
