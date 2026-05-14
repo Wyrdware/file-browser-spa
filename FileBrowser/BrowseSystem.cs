@@ -148,7 +148,9 @@ namespace TestProject.FileBrowser {
         }
 
         private void ValidatePath(string fullPath) {
-            if (!fullPath.StartsWith(_homeDirectory, StringComparison.OrdinalIgnoreCase)) {
+            bool isHome = string.Equals(fullPath, _homeDirectory, StringComparison.OrdinalIgnoreCase);
+            bool isInside = fullPath.StartsWith(_homeDirectory + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+            if (!isHome && !isInside) {
                 throw new UnauthorizedAccessException("Access denied: path is outside the home directory.");
             }
         }
