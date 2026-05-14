@@ -1,11 +1,11 @@
 namespace TestProject.FileBrowser {
 
-    public class FileSystem {
+    public class BrowseSystem {
 
         private readonly string _homeDirectory;
         private const int MaxSearchResults = 200;
 
-        public FileSystem(string homeDirectory) {
+        public BrowseSystem(string homeDirectory) {
             _homeDirectory = Path.GetFullPath(homeDirectory);
             if (!Directory.Exists(_homeDirectory)) {
                 Directory.CreateDirectory(_homeDirectory);

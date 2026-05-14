@@ -23,7 +23,6 @@ namespace TestProject.FileBrowser {
         bool IsFolder
     );
     public sealed record FileOperationResult(
-        bool Success,
         string Message
     );
     public sealed record MoveRequest(
