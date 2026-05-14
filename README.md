@@ -1,16 +1,20 @@
 # File Browser
 
-A single-page web application for browsing and managing files on a server. ASP.NET Core (.NET 8) backend, vanilla TypeScript frontend — no JS frameworks or bundler.
-
-> No authentication — intended for local or trusted-network use only. All paths are sandboxed to the configured home directory.
+A single-page web application for browsing and managing files on a server. ASP.NET Core (.NET 8) backend, vanilla TypeScript frontend.
 
 ## Features
 
-- Browse files and folders with recursive name search
-- Upload, download, delete, move, and copy files and folders
-- Deep-linkable URLs via URL hash — browser back/forward works, links are shareable
-- File browser lives in a native HTML `<dialog>` element
-- Batched rendering with `requestAnimationFrame` for smooth navigation of large directories
+- Browse files and folders
+- Upload, download, delete, move, and copy files/folders
+- Deep-linkable folder state
+- File browser built inside a `<dialog>` element
+- Batched rendering with `requestAnimationFrame` for larger directories
+
+## Performance Notes
+
+I tested with a folder containing 10,000 files and profiled the page during use. The current implementation works, and batched rendering helped with the initial page load, but large directories still eventually render every table element. This creates a notable slowdown when leaving the page, likely from the cleanup/garbage collection cost of many elements at once.
+
+A future improvement would be range-based directory loading paired with virtualized table rendering.
 
 ## Configuration
 
@@ -24,17 +28,16 @@ Set the root directory in `appsettings.json`:
 }
 ```
 
-For local development, override in `appsettings.Development.json`.
-
 ## Building and Running
 
 **Prerequisites:** [.NET 8 SDK](https://dotnet.microsoft.com/download) and [Node.js](https://nodejs.org/).
 
+From the project root:
+
 ```bash
-git clone <repo-url>
 npm install
 npm run build
 dotnet run
 ```
 
-The app will be available at `https://localhost:7146` (or `http://localhost:5120`). Use `npm run watch` during development to recompile TypeScript on save.
+Use `npm run watch` during development to recompile TypeScript on save.
