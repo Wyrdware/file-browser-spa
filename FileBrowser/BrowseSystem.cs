@@ -3,7 +3,6 @@ namespace TestProject.FileBrowser {
     public class BrowseSystem {
 
         private readonly string _homeDirectory;
-        private const int MaxSearchResults = 200;
 
         public BrowseSystem(string homeDirectory) {
             _homeDirectory = Path.GetFullPath(homeDirectory);
@@ -49,14 +48,12 @@ namespace TestProject.FileBrowser {
 
             try {
                 foreach (string dir in Directory.EnumerateDirectories(basePath, pattern, SearchOption.AllDirectories)) {
-                    if (entries.Count >= MaxSearchResults) break;
                     string name = Path.GetFileName(dir);
                     string rel = Path.GetRelativePath(_homeDirectory, dir).Replace('\\', '/');
                     entries.Add(new SearchResultEntry(name, rel, IsFolder: true));
                 }
 
                 foreach (string file in Directory.EnumerateFiles(basePath, pattern, SearchOption.AllDirectories)) {
-                    if (entries.Count >= MaxSearchResults) break;
                     string name = Path.GetFileName(file);
                     string rel = Path.GetRelativePath(_homeDirectory, file).Replace('\\', '/');
                     entries.Add(new SearchResultEntry(name, rel, IsFolder: false));

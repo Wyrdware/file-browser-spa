@@ -55,15 +55,6 @@ function formatBytes(bytes: number): string {
   return `${value.toFixed(1)} ${units[unitIndex]}`;
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll("\"", "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
 function getPathFromHash(): string {
   const hash = location.hash.replace(/^#\/?/, "");
   return decodeURIComponent(hash);
@@ -168,7 +159,7 @@ export function createFileBrowser(): { element: HTMLDialogElement; open(): void 
     loadDirectory(getPathFromHash());
   });
 
-  folderContentsBody.addEventListener("click", async (event) => {
+  dialog.addEventListener("click", async (event) => {
     const target = event.target;
     if (!(target instanceof HTMLButtonElement)) return;
 
@@ -274,6 +265,94 @@ export function createFileBrowser(): { element: HTMLDialogElement; open(): void 
 
 
   //Render-----------------------------
+  let currentRenderToken = 0;
+
+  function makeButton(text: string, action: string, path: string): HTMLButtonElement {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = text;
+    btn.dataset["action"] = action;
+    btn.dataset["path"] = path;
+    return btn;
+  }
+
+  function buildFolderRow(name: string, path: string): HTMLTableRowElement {
+    const row = document.createElement("tr");
+    const nameCell = document.createElement("td");
+    nameCell.textContent = name;
+    const typeCell = document.createElement("td");
+    typeCell.textContent = "Folder";
+    const sizeCell = document.createElement("td");
+    const actionsCell = document.createElement("td");
+    actionsCell.append(
+      makeButton("Open", "open", path),
+      makeButton("Delete", "delete", path),
+      makeButton("Move", "move", path),
+      makeButton("Copy", "copy", path),
+    );
+    row.append(nameCell, typeCell, sizeCell, actionsCell);
+    return row;
+  }
+
+  function buildFileRow(name: string, sizeBytes: number, path: string): HTMLTableRowElement {
+    const row = document.createElement("tr");
+    const nameCell = document.createElement("td");
+    nameCell.textContent = name;
+    const typeCell = document.createElement("td");
+    typeCell.textContent = "File";
+    const sizeCell = document.createElement("td");
+    sizeCell.textContent = formatBytes(sizeBytes);
+    const actionsCell = document.createElement("td");
+    const downloadLink = document.createElement("a");
+    downloadLink.href = `/api/files/download?path=${encodeURIComponent(path)}`;
+    downloadLink.textContent = "Download";
+    actionsCell.append(
+      downloadLink,
+      makeButton("Delete", "delete", path),
+      makeButton("Move", "move", path),
+      makeButton("Copy", "copy", path),
+    );
+    row.append(nameCell, typeCell, sizeCell, actionsCell);
+    return row;
+  }
+
+  function buildSearchRow(entry: SearchResultEntry): HTMLTableRowElement {
+    const row = document.createElement("tr");
+    const nameCell = document.createElement("td");
+    nameCell.textContent = entry.name;
+    const typeCell = document.createElement("td");
+    typeCell.textContent = entry.isFolder ? "Folder" : "File";
+    const pathCell = document.createElement("td");
+    pathCell.textContent = entry.path;
+    const actionsCell = document.createElement("td");
+    if (entry.isFolder) {
+      actionsCell.appendChild(makeButton("Open", "open", entry.path));
+    } else {
+      const downloadLink = document.createElement("a");
+      downloadLink.href = `/api/files/download?path=${encodeURIComponent(entry.path)}`;
+      downloadLink.textContent = "Download";
+      actionsCell.appendChild(downloadLink);
+    }
+    row.append(nameCell, typeCell, pathCell, actionsCell);
+    return row;
+  }
+
+  async function renderBatched(rows: HTMLTableRowElement[]): Promise<void> {
+    folderContentsBody.innerHTML = "";
+    const token = ++currentRenderToken;
+    let index = 0;
+
+    while (index < rows.length) {
+      if (token !== currentRenderToken) return;
+      const end = Math.min(index + 100, rows.length);
+      for (let i = index; i < end; i++) {
+        folderContentsBody.appendChild(rows[i]!);
+      }
+      index = end;
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    }
+  }
+
   function render(listing: DirectoryListing): void {
     const folderCount = listing.folders.length;
     const fileCount = listing.files.length;
@@ -282,66 +361,18 @@ export function createFileBrowser(): { element: HTMLDialogElement; open(): void 
     searchInput.placeholder = listing.path;
     searchInput.value = "";
 
-    const folderRowsHtml = listing.folders
-      .map(folder => {
-        const folderPath = joinPath(getPathFromHash(), folder.name);
-        return `
-          <tr>
-            <td>${escapeHtml(folder.name)}</td>
-            <td>Folder</td>
-            <td></td>
-            <td>
-              <button data-action="open" data-path="${escapeHtml(folderPath)}" type="button">Open</button>
-              <button data-action="delete" data-path="${escapeHtml(folderPath)}" type="button">Delete</button>
-              <button data-action="move" data-path="${escapeHtml(folderPath)}" type="button">Move</button>
-              <button data-action="copy" data-path="${escapeHtml(folderPath)}" type="button">Copy</button>
-            </td>
-          </tr>`;
-      })
-      .join("");
+    const currentPath = getPathFromHash();
+    const rows: HTMLTableRowElement[] = [
+      ...listing.folders.map(folder => buildFolderRow(folder.name, joinPath(currentPath, folder.name))),
+      ...listing.files.map(file => buildFileRow(file.name, file.sizeBytes, joinPath(currentPath, file.name))),
+    ];
 
-    const fileRowsHtml = listing.files
-      .map(file => {
-        const filePath = joinPath(getPathFromHash(), file.name);
-        return `
-          <tr>
-            <td>${escapeHtml(file.name)}</td>
-            <td>File</td>
-            <td>${formatBytes(file.sizeBytes)}</td>
-            <td>
-              <a href="/api/files/download?path=${encodeURIComponent(filePath)}">Download</a>
-              <button data-action="delete" data-path="${escapeHtml(filePath)}" type="button">Delete</button>
-              <button data-action="move" data-path="${escapeHtml(filePath)}" type="button">Move</button>
-              <button data-action="copy" data-path="${escapeHtml(filePath)}" type="button">Copy</button>
-            </td>
-          </tr>`;
-      })
-      .join("");
-
-    folderContentsBody.innerHTML = folderRowsHtml + fileRowsHtml;
+    renderBatched(rows);
   }
 
   function renderSearchResults(results: SearchResults): void {
     folderInfoLabel.textContent = `Search: "${results.query}" \u2014 ${results.entries.length} results`;
-
-    const rowsHtml = results.entries
-      .map(entry => {
-        const typeLabel = entry.isFolder ? "Folder" : "File";
-        const actionHtml = entry.isFolder
-          ? `<button data-action="open" data-path="${escapeHtml(entry.path)}" type="button">Open</button>`
-          : `<a href="/api/files/download?path=${encodeURIComponent(entry.path)}">Download</a>`;
-
-        return `
-          <tr>
-            <td>${escapeHtml(entry.name)}</td>
-            <td>${typeLabel}</td>
-            <td>${escapeHtml(entry.path)}</td>
-            <td>${actionHtml}</td>
-          </tr>`;
-      })
-      .join("");
-
-    folderContentsBody.innerHTML = rowsHtml;
+    renderBatched(results.entries.map(buildSearchRow));
   }
 
 
