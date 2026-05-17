@@ -78,6 +78,7 @@ export function createFileBrowser(): { element: HTMLDialogElement; open(): void 
       <button id="up-button" type="button">Up</button>
       <form id="search-form" style="display: inline;">
         <input id="search-input" type="search"/>
+        <button type="submit">Search</button>
       </form>
     </div>
 
@@ -132,13 +133,11 @@ export function createFileBrowser(): { element: HTMLDialogElement; open(): void 
     searchInput.value = "";
     const parentPath = getPathFromHash().replace(/\/?[^\/]+\/?$/, "");
     location.hash = parentPath;
+    loadDirectory(parentPath);
   });
 
-  searchForm.addEventListener("submit", (event) => {
+  searchForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-  });
-
-  searchInput.addEventListener("input", async () => {
     const query = searchInput.value.trim();
     if (query === "") {
       loadDirectory(getPathFromHash());
@@ -374,7 +373,8 @@ export function createFileBrowser(): { element: HTMLDialogElement; open(): void 
   }
 
   function renderSearchResults(results: SearchResults): void {
-    folderInfoLabel.textContent = `Search: "${results.query}" \u2014 ${results.entries.length} results`;
+    const path = getPathFromHash() || "/";
+    folderInfoLabel.textContent = `Search: "${results.query}" in ${path} \u2014 ${results.entries.length} results`;
     renderBatched(results.entries.map(buildSearchRow));
   }
 
