@@ -110,7 +110,7 @@ namespace TestProject.FileBrowser{
                 return;
             }
 
-            // Key fully consumed, set value on current node
+            // Set value on current node
             currentNode.Value = value;
         }
         public bool TryGet(string key, out TValue? value){
