@@ -72,13 +72,12 @@ export function createFileBrowser(): { element: HTMLDialogElement; open(): void 
   //Construct--------------------------
   const dialog = document.createElement("dialog");
   dialog.style.width = "80vw";
-  dialog.style.maxHeight = "80vh";
+  dialog.style.height = "70vh";
   dialog.innerHTML = `
     <div>
       <button id="up-button" type="button">Up</button>
       <form id="search-form" style="display: inline;">
         <input id="search-input" type="search"/>
-        <button type="submit">Search</button>
       </form>
     </div>
 
@@ -130,18 +129,22 @@ export function createFileBrowser(): { element: HTMLDialogElement; open(): void 
   });
 
   upButton.addEventListener("click", () => {
+    searchInput.value = "";
     const parentPath = getPathFromHash().replace(/\/?[^\/]+\/?$/, "");
     location.hash = parentPath;
   });
 
-  searchForm.addEventListener("submit", async (event) => {
+  searchForm.addEventListener("submit", (event) => {
     event.preventDefault();
+  });
+
+  searchInput.addEventListener("input", async () => {
     const query = searchInput.value.trim();
     if (query === "") {
       loadDirectory(getPathFromHash());
-      return;
+    } else {
+      await searchFiles(query);
     }
-    await searchFiles(query);
   });
 
   uploadInput.addEventListener("change", async () => {

@@ -7,9 +7,11 @@ namespace TestProject.Controllers {
     public class FilesController : ControllerBase {
 
         private readonly BrowseSystem _browseSystem;
+        private readonly ILogger<FilesController> _logger;
 
-        public FilesController(BrowseSystem browseSystem) {
+        public FilesController(BrowseSystem browseSystem, ILogger<FilesController> logger) {
             _browseSystem = browseSystem;
+            _logger = logger;
         }
 
         [HttpGet("directory")]
