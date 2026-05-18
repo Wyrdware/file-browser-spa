@@ -15,7 +15,7 @@ The backend uses a Radix Tree for the path, and a second one containing only the
 
 Batching entry rendering helped with the initial page load, but large directories still eventually render every table element. This can create a notable slowdown when leaving the page, likely from the cleanup/garbage collection cost of many elements at once.
 
-A future improvements could be range-based directory loading paired with virtualized table rendering, as well as utilizing Adaptive Radix Trees and manually managing the memory.
+A future improvement could be range-based directory loading paired with virtualized table rendering, as well as utilizing Adaptive Radix Trees.
 
 ## Configuration
 
